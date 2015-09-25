@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+	<name>150923</name>
+	<comment></comment>
+	<projects>
+	</projects>
+	<buildSpec>
+		<buildCommand>
+			<name>com.adobe.flexbuilder.project.flexbuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+		<buildCommand>
+			<name>com.adobe.flexbuilder.project.apollobuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+	</buildSpec>
+	<natures>
+		<nature>com.adobe.flexide.project.multiplatform.multiplatformasnature</nature>
+		<nature>com.adobe.flexide.project.multiplatform.multiplatformnature</nature>
+		<nature>com.adobe.flexbuilder.project.apollonature</nature>
+		<nature>com.adobe.flexbuilder.project.actionscriptnature</nature>
+	</natures>
+	<linkedResources>
+		<link>
+			<name>[source path] agony2d-build-v.1.2.0-source-src</name>
+			<type>2</type>
+			<location>D:/Agony2D/agony2d-build-v.1.2.0/source/src</location>
+		</link>
+		<link>
+			<name>[source path] agony2d-core-source-src</name>
+			<type>2</type>
+			<location>D:/Agony2D/agony2d-core/source/src</location>
+		</link>
+		<link>
+			<name>[source path] assets-build</name>
+			<type>2</type>
+			<location>D:/Agony2D/agony2d-build-v.1.2.0/assets-build</location>
+		</link>
+		<link>
+			<name>[source path] examples-build</name>
+			<type>2</type>
+			<location>D:/Agony2D/agony2d-build-v.1.2.0/examples-build</location>
+		</link>
+	</linkedResources>
+</projectDescription>

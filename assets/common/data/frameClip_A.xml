@@ -1,0 +1,8 @@
+<animation id="garbage" frameRate="35">
+	
+	<clip id="open"  data= "0 -10 "/>
+	<clip id="close"  data= "10 -0 "/>
+	<clip id="open_repeat"  data= "10 - 0,0 -10 "/>
+	<clip id="shake"  data= "20 -54"/>
+	
+</animation>
