@@ -9,7 +9,7 @@ package AA
 			var imgA:ImageAA;
 			
 			imgA = new ImageAA;
-			imgA.textureId = id;
+			imgA.textureId = "temp/" + id + ".png";
 			imgA.scaleX = imgA.scaleY = scale;
 			imgA.pivotX = imgA.sourceWidth / 2;
 			imgA.pivotY = imgA.sourceHeight / 2;

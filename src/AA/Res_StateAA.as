@@ -31,7 +31,15 @@ public class Res_StateAA extends StateAA {
 				"temp/flashlight.png",
 				"temp/folder.png",
 				"temp/phone.png",
-				"temp/theme.png"
+				"temp/theme.png",
+				
+				"temp/browser2.png",
+				"temp/calculator2.png",
+				"temp/camera2.png",
+				"temp/flashlight2.png",
+				"temp/folder2.png",
+				"temp/phone2.png",
+				"temp/theme2.png"
 			]
 		this.resA.addBundle(new FilesBundle(AY), new TextureAA_BundleHandler(1.0, false, false));
 		

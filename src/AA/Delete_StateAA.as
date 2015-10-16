@@ -2,7 +2,9 @@ package AA
 {
 	import com.greensock.TweenLite;
 	import com.greensock.TweenMax;
+	import com.greensock.easing.Back;
 	import com.greensock.easing.Cubic;
+	import com.greensock.easing.Elastic;
 	import com.greensock.easing.Linear;
 	
 	import flash.geom.Point;
@@ -32,6 +34,10 @@ package AA
 			
 		}
 		
+		override public function onExit() : void {
+			TweenMax.killAll();
+		}
+		
 		
 		private const _topTweenTime_B:Number = 0.15;
 		private const _topTweenTime_A:Number = 0.3;
@@ -39,8 +45,8 @@ package AA
 		private const DRAG_OFFSET_Y:int = -70;
 		private const PRESS_SCALE:Number = 0.9;
 		private const _g_flyToGarbageTime:Number = 0.55;
-		private const _pressIconScale:Number = 1.3;
-		private const _pressIconAlpha:Number = 0.9;
+		private const _pressIconScale:Number = 1.35;
+		private const _revertTime:Number = 0.55;
 		
 		
 		private const FLAG_O_A:int = 1; // O -> A
@@ -60,18 +66,19 @@ package AA
 		private var _currTouch:Touch;
 		private var _dragging:Boolean;
 		private var _readyToWaste:Boolean;
+		
 	
 		
 		private var _iconTextureList:Array = 
 			[
-				"temp/browser.png",
-				"temp/calculator.png",
-				"temp/phone.png",
-				"temp/theme.png",
-				"temp/flashlight.png",
-				"temp/theme.png",
-				"temp/camera.png",
-				"temp/folder.png"
+				"browser",
+				"calculator",
+				"phone",
+				"theme",
+				"flashlight",
+				"theme",
+				"camera",
+				"folder"
 			]
 		
 		
@@ -129,13 +136,15 @@ package AA
 		private function ____doCreateDragIcon( index:int ) : FusionAA {
 			var dragFusion:DragFusionAA;
 			var imgA:ImageAA;
+			var iconName:String;
 			
 			dragFusion = new DragFusionAA;
 			dragFusion.touchMerged = true;
 			dragFusion.userData = index;
 			
 			// template
-			imgA = AAUtil.createScaleImg(_iconTextureList[index]);
+			iconName = _iconTextureList[index];
+			imgA = AAUtil.createScaleImg(iconName);
 			
 			dragFusion.addNode(imgA);
 			this.____doLayoutIcon(dragFusion, index);
@@ -175,8 +184,6 @@ package AA
 			_currTouch = e.touch;
 			_pressIcon = e.target as DragFusionAA;
 			
-			//trace(_pressIcon.userData, _pressIcon.globalToLocal(_currTouch.rootX, _currTouch.rootY));
-			
 			TweenLite.to(_pressIcon, g_dragDelayStartupTime, {scaleX:PRESS_SCALE, scaleY:PRESS_SCALE, onComplete:onStartDragIcon, ease:Linear.easeNone});
 			
 			_pressIcon.addEventListener(ATouchEvent.UNBINDING, onUnbindingIcon);
@@ -189,7 +196,7 @@ package AA
 			
 			_pressIcon.scaleX = _pressIconScale;
 			_pressIcon.scaleY = _pressIconScale;
-			_pressIcon.alpha = _pressIconAlpha;
+			//_pressIcon.alpha = _pressIconAlpha;
 			
 			_pressIcon.startDrag(_currTouch, null, 0, DRAG_OFFSET_Y, true);
 			_currTouch.addEventListener(AEvent.CHANGE,   onMoveIcon);
@@ -208,10 +215,14 @@ package AA
 			if(_pressIcon.y <= HIGH_C && !_readyToWaste) {
 				_readyToWaste = true;
 				this.doTweenGarbage(FLAG_A_B);
+				
+				this.doModifyIconTexture(_pressIcon, false);
 			}
 			else if(_pressIcon.y > HIGH_C && _readyToWaste) {
 				_readyToWaste = false;
 				this.doTweenGarbage(FLAG_B_A);
+				
+				this.doModifyIconTexture(_pressIcon, true);
 			}
 		}
 		
@@ -251,20 +262,43 @@ package AA
 							 
 						 }});
 			}
+			// 恢复原状
 			else {
-				index = int(_pressIcon.userData);
-				_pressIcon.scaleX = 1.0;
-				_pressIcon.scaleY = 1.0;
-				_pressIcon.alpha = 1.0;
-				this.____doLayoutIcon(_pressIcon, index);
-				_pressIcon = null;
-				
+				this.doRevertIcon();
 				this.doTweenGarbage(FLAG_AB_O);
 			}
 			
 			_dragging = _readyToWaste = false;
 			
 //			Agony.getLog().simplify(touch.getHoveringNode());
+		}
+		
+		private function doRevertIcon() : void {
+			var index:int;
+			var gapW:Number;
+			
+			index = int(_pressIcon.userData);
+			_pressIcon.scaleX = 1.0;
+			_pressIcon.scaleY = 1.0;
+			this.doModifyIconTexture(_pressIcon, true);
+			
+			gapW = (this.getRoot().getAdapter().rootWidth - paddingW * 2) / 3;
+			TweenLite.to(_pressIcon, _revertTime, 
+				{x:(index % 4) * gapW + paddingW, 
+				y:int(index / 4) * 280 + 1100,
+				ease:Cubic.easeOut});
+			_pressIcon = null;
+		}
+		
+		private function doModifyIconTexture( dragFusion:DragFusionAA, normal:Boolean ) : void {
+			var index:int;
+			var imgA:ImageAA;
+			var iconName:String;
+			
+			index = int(_pressIcon.userData);
+			imgA = dragFusion.getNodeAt(0) as ImageAA;
+			iconName = normal ? _iconTextureList[index] : _iconTextureList[index] + "2";
+			imgA.textureId = "temp/" + iconName + ".png";
 		}
 		
 		////////////////////////////////////////////
