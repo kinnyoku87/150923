@@ -6,6 +6,8 @@ package AA {
 	import org.agony2d.resource.handlers.AtlasAA_BundleHandler;
 	import org.agony2d.resource.handlers.FrameClip_BundleHandler;
 	import org.agony2d.resource.handlers.TextureAA_BundleHandler;
+	import org.agony2d.ui.skins.ButtonSkin;
+	import org.agony2d.ui.skins.SkinManager;
 	
 public class Res_StateAA extends StateAA {
 	
@@ -39,7 +41,17 @@ public class Res_StateAA extends StateAA {
 				"temp/flashlight2.png",
 				"temp/folder2.png",
 				"temp/phone2.png",
-				"temp/theme2.png"
+				"temp/theme2.png",
+				
+				"temp/topBg_A.png",
+				"temp/text_A.png",
+				"temp/topRay.png",
+				"temp/alertBg.png",
+				
+				"temp/text_determine.png",
+				"temp/text_cancel.png",
+				"ui/A/up.png",
+				"ui/A/down.png"
 			]
 		this.resA.addBundle(new FilesBundle(AY), new TextureAA_BundleHandler(1.0, false, false));
 		
@@ -57,6 +69,13 @@ public class Res_StateAA extends StateAA {
 				"atlas/garbage.atlas"
 			];
 		this.resA.addBundle(new FilesBundle(AY), new AtlasAA_BundleHandler);
+		
+		AY = new <String>
+			[
+				"ui/A/up.png",
+				"ui/A/down.png"
+			];
+		SkinManager.registerSkin("A", new ButtonSkin(AY, 0, 1, 1, 0));
 		
 		this.resA.addEventListener(AEvent.COMPLETE, onComplete);
 	}

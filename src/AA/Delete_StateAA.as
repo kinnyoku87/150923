@@ -9,7 +9,9 @@ package AA
 	
 	import flash.geom.Point;
 	
+	import org.agony2d.Agony;
 	import org.agony2d.display.AnimeAA;
+	import org.agony2d.display.ButtonAA;
 	import org.agony2d.display.DragFusionAA;
 	import org.agony2d.display.FusionAA;
 	import org.agony2d.display.ImageAA;
@@ -47,20 +49,30 @@ package AA
 		private const _g_flyToGarbageTime:Number = 0.55;
 		private const _pressIconScale:Number = 1.35;
 		private const _revertTime:Number = 0.55;
-		
+		private const _readyToDeleteTweenTime:Number = 0.3;
 		
 		private const FLAG_O_A:int = 1; // O -> A
-		private const FLAG_AB_O:int = 2; // A -> O
+		private const FLAG_BACK_TO_O:int = 2; // A -> O
 		private const FLAG_A_B:int = 3; // A -> B
 		private const FLAG_B_A:int = 4; // B -> A
+		private const FLAG_B_C:int = 5; // B -> C
 		
-		private var HIGH_A:int; // 50
-		private var HIGH_B:int; // 190
-		private var HIGH_C:int; // 270
+		private var garbage_offsetY_O:int; // -190
+		private var garbage_offsetY_A:int; // -50
+		private var garbage_offsetY_B:int; // 0
+		
+		private var topBg_offsetY_O:int; // -topBg sourceHeight
+		private var topBg_offsetY_A:int; // -topBg sourceHeight+110
+		private var topBg_offsetY_B:int; // -topBg sourceHeight+190
+		private var topBg_offsetY_C:int; // 0
+		
+		private var coordY_for_delete:int; // 270
 		
 		
-		private var _wasteImg:AnimeAA;
-		private var _topFusion:FusionAA;
+		private var _garbageImg:AnimeAA;
+		private var _topRay:ImageAA;
+		private var _topFusion_bg:FusionAA; // 背景
+		private var _topFusion_garbage:FusionAA; // garbage
 		private var _bottomFusion:FusionAA;
 		private var _pressIcon:DragFusionAA;
 		private var _currTouch:Touch;
@@ -85,27 +97,46 @@ package AA
 		private function ____doInitTop() : void {
 			var imgA:ImageAA;
 			
-			_topFusion = new FusionAA;
-			this.getFusion().addNode(_topFusion);
+			// top bg
+			_topFusion_bg = new FusionAA;
+			this.getFusion().addNode(_topFusion_bg);
 			
 			imgA = new ImageAA;
-			imgA.textureId = "temp/topBg.png";
-			_topFusion.addNode(imgA);
-			HIGH_B = imgA.sourceHeight;
-			HIGH_A = 50;
-			HIGH_C = HIGH_B + 80;
+			imgA.textureId = "temp/topBg_A.png";
+			_topFusion_bg.addNode(imgA);
 			
-			// template
-			_wasteImg = new AnimeAA();
-			_wasteImg.textureId = "atlas/garbage0";
-			_wasteImg.pivotX = _wasteImg.sourceWidth / 2;
-			_wasteImg.pivotY = _wasteImg.sourceHeight / 2;
+			//==================================================
 			
-			_wasteImg.x = this.getRoot().getAdapter().rootWidth / 2;
-			_wasteImg.y = HIGH_B - 65;
-			_topFusion.addNode(_wasteImg);
+			garbage_offsetY_O = -190;
+			garbage_offsetY_A = -50; //imgA.sourceHeight;
 			
-			_topFusion.y = -HIGH_B;
+			topBg_offsetY_O = - imgA.sourceHeight;
+			topBg_offsetY_A = 140 - imgA.sourceHeight;
+			topBg_offsetY_B = 190 - imgA.sourceHeight;
+			
+			coordY_for_delete = 270;
+			
+			//==================================================
+			
+			// top garbage
+			_topFusion_garbage = new FusionAA;
+			this.getFusion().addNode(_topFusion_garbage);
+			
+			_topRay = new AnimeAA();
+			_topRay.textureId = "temp/topRay.png";
+			_topFusion_garbage.addNode(_topRay);
+			
+			_garbageImg = new AnimeAA();
+			_garbageImg.textureId = "atlas/garbage0";
+			_garbageImg.pivotX = _garbageImg.sourceWidth / 2;
+			_garbageImg.pivotY = _garbageImg.sourceHeight / 2;
+			
+			_garbageImg.x = this.getRoot().getAdapter().rootWidth / 2;
+			_garbageImg.y = 190 - 65;
+			_topFusion_garbage.addNode(_garbageImg);
+			
+			_topFusion_bg.y = topBg_offsetY_O;
+			_topFusion_garbage.y = garbage_offsetY_O;
 			
 //			this.getRoot().getAdapter().getTouch().addEventListener(ATouchEvent.PRESS, function(e:ATouchEvent):void {
 //				trace(e.touch.rootX, e.touch.rootY);
@@ -212,13 +243,13 @@ package AA
 			
 			touch = e.target as Touch;
 //			Agony.getLog().simplify("{0}, {1}",touch.rootX, touch.rootY);
-			if(_pressIcon.y <= HIGH_C && !_readyToWaste) {
+			if(_pressIcon.y <= coordY_for_delete && !_readyToWaste) {
 				_readyToWaste = true;
 				this.doTweenGarbage(FLAG_A_B);
 				
 				this.doModifyIconTexture(_pressIcon, false);
 			}
-			else if(_pressIcon.y > HIGH_C && _readyToWaste) {
+			else if(_pressIcon.y > coordY_for_delete && _readyToWaste) {
 				_readyToWaste = false;
 				this.doTweenGarbage(FLAG_B_A);
 				
@@ -237,40 +268,51 @@ package AA
 			touch = e.target as Touch;
 			
 			if(_readyToWaste) {
-				controlX = _wasteImg.x + (_pressIcon.x - _wasteImg.x) * 1 / 4;
-				controlY = -150;
-				rotation = _pressIcon.x - _wasteImg.x < 0 ? 540 : -540;
-				
-				this.getRoot().getAdapter().getTouch().touchEnabled = false;
-				
-				TweenMax.to(_pressIcon, _g_flyToGarbageTime, {scaleX:0.2, scaleY:0.2, alpha:0.2, rotation:rotation,
-						bezier:[{x:controlX, y:controlY}, {x:_wasteImg.x, y:_wasteImg.y}], 
-						 ease:Linear.easeNone, 
-						 onComplete:function():void{
-							 _pressIcon.kill();
-							 _pressIcon = null;
-							 
-							 _wasteImg.getAnimation().start("atlas/garbage", "garbage.shake", 1, 
-							 function():void{
-							 	 
-								 doTweenGarbage(FLAG_AB_O);
-								 
-								 
-								 getRoot().getAdapter().getTouch().touchEnabled = true;
-								 
-							 });
-							 
-						 }});
+				this.doTweenGarbage(FLAG_B_C);
+//				doCastToGarbage();
 			}
 			// 恢复原状
 			else {
 				this.doRevertIcon();
-				this.doTweenGarbage(FLAG_AB_O);
+				this.doTweenGarbage(FLAG_BACK_TO_O);
 			}
 			
 			_dragging = _readyToWaste = false;
 			
 //			Agony.getLog().simplify(touch.getHoveringNode());
+		}
+		
+		private function doCastToGarbage() : void {
+			var index:int;
+			var touch:Touch;
+			var controlX:Number;
+			var controlY:Number;
+			var rotation:Number;
+			
+			controlX = _garbageImg.x + (_pressIcon.x - _garbageImg.x) * 1 / 4;
+			controlY = -150;
+			rotation = _pressIcon.x - _garbageImg.x < 0 ? 540 : -540;
+			
+			this.getRoot().getAdapter().getTouch().touchEnabled = false;
+			
+			TweenMax.to(_pressIcon, _g_flyToGarbageTime, {scaleX:0.2, scaleY:0.2, alpha:0.2, rotation:rotation,
+				bezier:[{x:controlX, y:controlY}, {x:_garbageImg.x, y:_garbageImg.y}], 
+				ease:Linear.easeNone, 
+				onComplete:function():void{
+					_pressIcon.kill();
+					_pressIcon = null;
+					
+					_garbageImg.getAnimation().start("atlas/garbage", "garbage.shake", 1, 
+						function():void{
+							
+							doTweenGarbage(FLAG_BACK_TO_O);
+							
+							
+							getRoot().getAdapter().getTouch().touchEnabled = true;
+							
+						});
+					
+				}});
 		}
 		
 		private function doRevertIcon() : void {
@@ -305,25 +347,103 @@ package AA
 		// Interaction
 		////////////////////////////////////////////
 		
+		private var alertFusion:FusionAA;
+		private var alertBg:ImageAA;
+		private var text_A:ImageAA;
+		private var _btnDetermine:ButtonAA;
+		private var _btnCancel:ButtonAA;
+		private const BTN_GAP_X:int = 285;
+		private const BTN_COORD_Y:int = 385;
+		
 		private function doTweenGarbage( tweenFlag:int ) : void {
+			var img_A:ImageAA;
+			
 			if(tweenFlag == FLAG_O_A){
-				TweenLite.to(_topFusion, _topTweenTime_B, {y:-HIGH_A, ease:Linear.easeNone});
+				TweenLite.to(_topFusion_bg,      _topTweenTime_B, {y:topBg_offsetY_A,   ease:Linear.easeNone});
+				TweenLite.to(_topFusion_garbage, _topTweenTime_B, {y:garbage_offsetY_A, ease:Linear.easeNone});
 			}
-			else if(tweenFlag == FLAG_AB_O){
-				TweenLite.to(_topFusion, _topTweenTime_A, {y:-HIGH_B, ease:Linear.easeNone});
+			else if(tweenFlag == FLAG_BACK_TO_O){
+				TweenLite.to(_topFusion_bg,      _topTweenTime_B, {y:topBg_offsetY_O,   ease:Linear.easeNone});
+				TweenLite.to(_topFusion_garbage, _topTweenTime_B, {y:garbage_offsetY_O, ease:Linear.easeNone});
+				if(alertFusion){
+					alertFusion.kill();
+					alertFusion = null;
+				}
 			}
 			else if(tweenFlag == FLAG_A_B){
-				TweenLite.to(_topFusion, _topTweenTime_B, {y:0, ease:Linear.easeNone, onComplete:function():void{
-					_wasteImg.getAnimation().start("atlas/garbage", "garbage.open", 1);
-					
+				TweenLite.to(_topFusion_bg,      _topTweenTime_B, {y:topBg_offsetY_B,   ease:Linear.easeNone });
+				TweenLite.to(_topFusion_garbage, _topTweenTime_B, {y:garbage_offsetY_B, ease:Linear.easeNone, onComplete:function():void{
+					_garbageImg.getAnimation().start("atlas/garbage", "garbage.open", 1);
 				}});
 			}
 			else if(tweenFlag == FLAG_B_A){
-				TweenLite.to(_topFusion, _topTweenTime_B, {y:-HIGH_A, ease:Linear.easeNone, onComplete:function():void{
-					_wasteImg.getAnimation().start("atlas/garbage", "garbage.close", 1);
-					
+				TweenLite.to(_topFusion_bg,      _topTweenTime_B, {y:topBg_offsetY_A,   ease:Linear.easeNone});
+				TweenLite.to(_topFusion_garbage, _topTweenTime_B, {y:garbage_offsetY_A, ease:Linear.easeNone, onComplete:function():void{
+					_garbageImg.getAnimation().start("atlas/garbage", "garbage.close", 1);
 				}});
 			}
+			else if(tweenFlag == FLAG_B_C){
+				TweenLite.to(_topFusion_bg,      _readyToDeleteTweenTime, {y:topBg_offsetY_C,   ease:Linear.easeNone});
+				TweenLite.to(_pressIcon,         _readyToDeleteTweenTime, {x:200, y:260, ease:Cubic.easeOut});
+				
+				alertBg = new ImageAA;
+				alertBg.textureId = "temp/alertBg.png";
+				this.getFusion().addNode(alertBg);
+				TweenLite.from(alertBg,         _readyToDeleteTweenTime, {alpha:0, ease:Linear.easeNone, onComplete:function():void{
+					alertFusion = new FusionAA;
+					getFusion().addNode(alertFusion);
+					
+					text_A = new ImageAA;
+					text_A.textureId = "temp/text_A.png";
+					text_A.x = (getRoot().getAdapter().rootWidth - text_A.sourceWidth) / 2 + 100;
+					text_A.y = 210;
+					alertFusion.addNode(text_A);
+					
+					_btnCancel = new ButtonAA;
+					_btnCancel.skinId = "A";
+					_btnCancel.pivotX = _btnCancel.getBackground().sourceWidth / 2;
+					_btnCancel.x = BTN_GAP_X;
+					_btnCancel.y = BTN_COORD_Y;
+					alertFusion.addNode(_btnCancel);
+					
+					img_A = new ImageAA;
+					img_A.textureId = "temp/text_cancel.png";
+					_btnCancel.addNode(img_A);
+					
+					_btnDetermine = new ButtonAA;
+					_btnDetermine.skinId = "A";
+					_btnDetermine.pivotX = _btnDetermine.getBackground().sourceWidth / 2;
+					_btnDetermine.x = getRoot().getAdapter().rootWidth - BTN_GAP_X;
+					_btnDetermine.y = BTN_COORD_Y;
+					alertFusion.addNode(_btnDetermine);
+					
+					img_A = new ImageAA;
+					img_A.textureId = "temp/text_determine.png";
+					_btnDetermine.addNode(img_A);
+					
+					_btnCancel.addEventListener(ATouchEvent.CLICK, onCancel);
+					_btnDetermine.addEventListener(ATouchEvent.CLICK,  onDetermine);
+				}});
+				
+			}
+		}
+		
+		private function onCancel(e:ATouchEvent):void{
+			TweenLite.to(alertBg, _readyToDeleteTweenTime, {alpha:0, ease:Linear.easeNone, onComplete:function():void{
+				alertBg.kill();
+			}})
+			
+			alertFusion.touchable = false;
+			
+			this.doRevertIcon();
+			this.doTweenGarbage(FLAG_BACK_TO_O);
+		}
+		
+		private function onDetermine(e:ATouchEvent):void{
+			alertBg.kill();
+			alertFusion.touchable = false;
+			
+			this.doCastToGarbage();
 		}
 		
 	}
