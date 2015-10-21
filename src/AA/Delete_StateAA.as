@@ -1,5 +1,6 @@
 package AA
 {
+	import com.greensock.OverwriteManager;
 	import com.greensock.TweenLite;
 	import com.greensock.TweenMax;
 	import com.greensock.easing.Back;
@@ -7,6 +8,7 @@ package AA
 	import com.greensock.easing.Elastic;
 	import com.greensock.easing.Linear;
 	
+	import flash.display3D.textures.CubeTexture;
 	import flash.geom.Point;
 	
 	import org.agony2d.Agony;
@@ -28,12 +30,13 @@ package AA
 			var imgA:ImageAA;
 			
 			imgA = new ImageAA;
-			imgA.textureId = "temp/bg.png";
+			imgA.textureId = "temp/bg2.png";
 			this.getFusion().addNode(imgA);
 			
-			this.____doInitTop();
 			this.____doInitBottom();
+			this.____doInitTop();
 			
+			OverwriteManager.mode = 1;
 		}
 		
 		override public function onExit() : void {
@@ -41,21 +44,24 @@ package AA
 		}
 		
 		
-		private const _topTweenTime_B:Number = 0.15;
-		private const _topTweenTime_A:Number = 0.3;
+		private const _topTweenTime_B:Number = 0.2;
+		private const _topTweenTime_O:Number = 0.15;
 		private const g_dragDelayStartupTime:Number = 0.3;
 		private const DRAG_OFFSET_Y:int = -70;
 		private const PRESS_SCALE:Number = 0.9;
-		private const _g_flyToGarbageTime:Number = 0.55;
-		private const _pressIconScale:Number = 1.35;
+		private const _g_flyToGarbageTime:Number = 0.45;
+		private const _pressIconScale:Number = 1.35;;
 		private const _revertTime:Number = 0.55;
-		private const _readyToDeleteTweenTime:Number = 0.3;
+		private const _readyToDeleteTweenTime:Number = 0.25;
+		private const _readyToDeleteTweenTime2:Number = 0.2;
 		
 		private const FLAG_O_A:int = 1; // O -> A
 		private const FLAG_BACK_TO_O:int = 2; // A -> O
 		private const FLAG_A_B:int = 3; // A -> B
 		private const FLAG_B_A:int = 4; // B -> A
 		private const FLAG_B_C:int = 5; // B -> C
+		
+		private var topStatus_offsetY_A:int;
 		
 		private var garbage_offsetY_O:int; // -190
 		private var garbage_offsetY_A:int; // -50
@@ -66,9 +72,13 @@ package AA
 		private var topBg_offsetY_B:int; // -topBg sourceHeight+190
 		private var topBg_offsetY_C:int; // 0
 		
+		private var bottom_offsetY_A:int; // 0
+		private var bottom_offsetY_B:int; // 
+		
 		private var coordY_for_delete:int; // 270
 		
 		
+		private var _topStatus:ImageAA;
 		private var _garbageImg:AnimeAA;
 		private var _topRay:ImageAA;
 		private var _topFusion_bg:FusionAA; // 背景
@@ -79,7 +89,7 @@ package AA
 		private var _dragging:Boolean;
 		private var _readyToWaste:Boolean;
 		
-	
+		
 		
 		private var _iconTextureList:Array = 
 			[
@@ -97,6 +107,12 @@ package AA
 		private function ____doInitTop() : void {
 			var imgA:ImageAA;
 			
+			// top status
+			_topStatus = new ImageAA;
+			_topStatus.textureId = "temp/topStatus.png";
+			this.getFusion().addNode(_topStatus);
+			topStatus_offsetY_A = -_topStatus.sourceHeight;
+			
 			// top bg
 			_topFusion_bg = new FusionAA;
 			this.getFusion().addNode(_topFusion_bg);
@@ -113,6 +129,8 @@ package AA
 			topBg_offsetY_O = - imgA.sourceHeight;
 			topBg_offsetY_A = 140 - imgA.sourceHeight;
 			topBg_offsetY_B = 190 - imgA.sourceHeight;
+			
+			bottom_offsetY_B = -topBg_offsetY_B;
 			
 			coordY_for_delete = 270;
 			
@@ -147,9 +165,16 @@ package AA
 			var i:int;
 			var l:int;
 			var dragFusion:FusionAA;
+			var img_A:ImageAA;
 			
 			_bottomFusion = new FusionAA;
 			this.getFusion().addNode(_bottomFusion);
+			
+			img_A = new ImageAA;
+			img_A.textureId = "temp/navigator.png";
+			_bottomFusion.addNode(img_A);
+			img_A.x = (this.getRoot().getAdapter().rootWidth - img_A.sourceWidth) / 2;
+			img_A.y = 1550;
 			
 			l = _iconTextureList.length;
 			while(i < l){
@@ -173,11 +198,15 @@ package AA
 			dragFusion.touchMerged = true;
 			dragFusion.userData = index;
 			
-			// template
 			iconName = _iconTextureList[index];
-			imgA = AAUtil.createScaleImg(iconName);
 			
+			imgA = AAUtil.createScaleImg(iconName);
 			dragFusion.addNode(imgA);
+			
+			imgA = AAUtil.createScaleImg(iconName + "_text");
+			dragFusion.addNode(imgA);
+			imgA.y = 110;
+			
 			this.____doLayoutIcon(dragFusion, index);
 			
 			dragFusion.addEventListener(ATouchEvent.PRESS, onPressIcon);
@@ -194,8 +223,19 @@ package AA
 			dragFusion.y = int(index / 4) * 280 + 1100;
 		}
 		
+		
+		
+		
+		
+		
+		////////////////////////////////////////////
+		////////////////////////////////////////////
+		////////////////////////////////////////////
 		////////////////////////////////////////////
 		// Event
+		////////////////////////////////////////////
+		////////////////////////////////////////////
+		////////////////////////////////////////////
 		////////////////////////////////////////////
 		
 		private function onUnbindingIcon(e:ATouchEvent) : void {
@@ -225,14 +265,21 @@ package AA
 			
 			_dragging = true;
 			
-			_pressIcon.scaleX = _pressIconScale;
-			_pressIcon.scaleY = _pressIconScale;
+			TweenLite.to(_pressIcon, g_dragDelayStartupTime, {scaleX:_pressIconScale, scaleY:_pressIconScale, ease:Back.easeOut});
+//			_pressIcon.scaleX = _pressIconScale;
+//			_pressIcon.scaleY = _pressIconScale;
 			//_pressIcon.alpha = _pressIconAlpha;
 			
 			_pressIcon.startDrag(_currTouch, null, 0, DRAG_OFFSET_Y, true);
 			_currTouch.addEventListener(AEvent.CHANGE,   onMoveIcon);
 			_currTouch.addEventListener(AEvent.COMPLETE, onReleaseIcon);
 			_currTouch = null;
+			
+			// 更换容器
+			this.getFusion().addNode(_pressIcon);
+			
+			// 隐藏文本
+			_pressIcon.getNodeAt(1).visible = false;
 			
 			this.doTweenGarbage(FLAG_O_A);
 		}
@@ -279,7 +326,6 @@ package AA
 			
 			_dragging = _readyToWaste = false;
 			
-//			Agony.getLog().simplify(touch.getHoveringNode());
 		}
 		
 		private function doCastToGarbage() : void {
@@ -295,6 +341,7 @@ package AA
 			
 			this.getRoot().getAdapter().getTouch().touchEnabled = false;
 			
+//			trace(_garbageImg.y);
 			TweenMax.to(_pressIcon, _g_flyToGarbageTime, {scaleX:0.2, scaleY:0.2, alpha:0.2, rotation:rotation,
 				bezier:[{x:controlX, y:controlY}, {x:_garbageImg.x, y:_garbageImg.y}], 
 				ease:Linear.easeNone, 
@@ -304,9 +351,13 @@ package AA
 					
 					_garbageImg.getAnimation().start("atlas/garbage", "garbage.shake", 1, 
 						function():void{
+							TweenLite.to(_alertBg, _readyToDeleteTweenTime, {alpha:0, ease:Linear.easeNone, onComplete:function():void{
+								_alertBg.kill();
+							}})
 							
 							doTweenGarbage(FLAG_BACK_TO_O);
 							
+							TweenLite.to(_bottomFusion, _topTweenTime_O, {alpha:1.0, y:bottom_offsetY_A, ease:Linear.easeNone});
 							
 							getRoot().getAdapter().getTouch().touchEnabled = true;
 							
@@ -320,15 +371,24 @@ package AA
 			var gapW:Number;
 			
 			index = int(_pressIcon.userData);
-			_pressIcon.scaleX = 1.0;
-			_pressIcon.scaleY = 1.0;
+//			_pressIcon.scaleX = 1.0;
+//			_pressIcon.scaleY = 1.0;
 			this.doModifyIconTexture(_pressIcon, true);
 			
 			gapW = (this.getRoot().getAdapter().rootWidth - paddingW * 2) / 3;
 			TweenLite.to(_pressIcon, _revertTime, 
 				{x:(index % 4) * gapW + paddingW, 
 				y:int(index / 4) * 280 + 1100,
+				scaleX:1.0,
+				scaleY:1.0,
 				ease:Cubic.easeOut});
+			
+			// 更换容器
+			_bottomFusion.addNode(_pressIcon);
+			
+			// 重现文本
+			_pressIcon.getNodeAt(1).visible = true;
+			
 			_pressIcon = null;
 		}
 		
@@ -348,23 +408,28 @@ package AA
 		////////////////////////////////////////////
 		
 		private var alertFusion:FusionAA;
-		private var alertBg:ImageAA;
+		private var _alertBg:ImageAA;
 		private var text_A:ImageAA;
 		private var _btnDetermine:ButtonAA;
 		private var _btnCancel:ButtonAA;
-		private const BTN_GAP_X:int = 285;
+		private const BTN_GAP_X:int = 305;
 		private const BTN_COORD_Y:int = 385;
 		
 		private function doTweenGarbage( tweenFlag:int ) : void {
 			var img_A:ImageAA;
 			
 			if(tweenFlag == FLAG_O_A){
-				TweenLite.to(_topFusion_bg,      _topTweenTime_B, {y:topBg_offsetY_A,   ease:Linear.easeNone});
-				TweenLite.to(_topFusion_garbage, _topTweenTime_B, {y:garbage_offsetY_A, ease:Linear.easeNone});
+				TweenLite.to(_topStatus,         _topTweenTime_B, {y:topStatus_offsetY_A, ease:Linear.easeNone});
+				TweenLite.to(_topFusion_bg,      _topTweenTime_B, {y:topBg_offsetY_A,     ease:Linear.easeNone});
+				TweenLite.to(_topFusion_garbage, _topTweenTime_B, {y:garbage_offsetY_A,   ease:Linear.easeNone});
+				
 			}
 			else if(tweenFlag == FLAG_BACK_TO_O){
-				TweenLite.to(_topFusion_bg,      _topTweenTime_B, {y:topBg_offsetY_O,   ease:Linear.easeNone});
-				TweenLite.to(_topFusion_garbage, _topTweenTime_B, {y:garbage_offsetY_O, ease:Linear.easeNone});
+				TweenLite.to(_topStatus,         _topTweenTime_O, {y:0,                 ease:Linear.easeNone, delay:_topTweenTime_O});
+				TweenLite.to(_topFusion_bg,      _topTweenTime_O, {y:topBg_offsetY_O,   ease:Linear.easeNone});
+				TweenLite.to(_topFusion_garbage, _topTweenTime_O, {y:garbage_offsetY_O, ease:Linear.easeNone});
+				_garbageImg.getAnimation().start("atlas/garbage", "garbage.close", 1);
+				
 				if(alertFusion){
 					alertFusion.kill();
 					alertFusion = null;
@@ -377,25 +442,34 @@ package AA
 				}});
 			}
 			else if(tweenFlag == FLAG_B_A){
-				TweenLite.to(_topFusion_bg,      _topTweenTime_B, {y:topBg_offsetY_A,   ease:Linear.easeNone});
+				TweenLite.to(_topFusion_bg,      _topTweenTime_B, {y:topBg_offsetY_A,   ease:Cubic.easeOut});
 				TweenLite.to(_topFusion_garbage, _topTweenTime_B, {y:garbage_offsetY_A, ease:Linear.easeNone, onComplete:function():void{
 					_garbageImg.getAnimation().start("atlas/garbage", "garbage.close", 1);
 				}});
 			}
 			else if(tweenFlag == FLAG_B_C){
-				TweenLite.to(_topFusion_bg,      _readyToDeleteTweenTime, {y:topBg_offsetY_C,   ease:Linear.easeNone});
-				TweenLite.to(_pressIcon,         _readyToDeleteTweenTime, {x:200, y:260, ease:Cubic.easeOut});
+				TweenLite.to(_topFusion_bg,      _readyToDeleteTweenTime, {y:topBg_offsetY_C,  ease:Linear.easeNone, onComplete:onTopBg});
+				TweenLite.to(_bottomFusion,      _readyToDeleteTweenTime, {alpha:0.3, y:bottom_offsetY_B, ease:Linear.easeNone});
+				TweenLite.to(_pressIcon,         _readyToDeleteTweenTime + _readyToDeleteTweenTime2, {x:215, y:265, scaleX:1.0, scaleY:1.0, ease:Cubic.easeOut});
+				this.doModifyIconTexture(_pressIcon, true);
 				
-				alertBg = new ImageAA;
-				alertBg.textureId = "temp/alertBg.png";
-				this.getFusion().addNode(alertBg);
-				TweenLite.from(alertBg,         _readyToDeleteTweenTime, {alpha:0, ease:Linear.easeNone, onComplete:function():void{
+				function onTopBg() : void {
+					// 遮挡层
+					_alertBg = new ImageAA;
+					_alertBg.textureId = "temp/alertBg.png";
+					getFusion().addNodeAt(_alertBg, 2);
+					TweenLite.from(_alertBg,         _readyToDeleteTweenTime2, {alpha:0, ease:Linear.easeNone, onComplete:function():void{
+						alertFusion.touchable = true;
+					}});
 					alertFusion = new FusionAA;
 					getFusion().addNode(alertFusion);
+					alertFusion.touchable = false;
+						
+					TweenLite.from(alertFusion,     _readyToDeleteTweenTime2, {alpha:0, ease:Cubic.easeOut});
 					
 					text_A = new ImageAA;
 					text_A.textureId = "temp/text_A.png";
-					text_A.x = (getRoot().getAdapter().rootWidth - text_A.sourceWidth) / 2 + 100;
+					text_A.x = (getRoot().getAdapter().rootWidth - text_A.sourceWidth) / 2 + 80;
 					text_A.y = 210;
 					alertFusion.addNode(text_A);
 					
@@ -423,24 +497,27 @@ package AA
 					
 					_btnCancel.addEventListener(ATouchEvent.CLICK, onCancel);
 					_btnDetermine.addEventListener(ATouchEvent.CLICK,  onDetermine);
-				}});
-				
+				}
 			}
 		}
 		
 		private function onCancel(e:ATouchEvent):void{
-			TweenLite.to(alertBg, _readyToDeleteTweenTime, {alpha:0, ease:Linear.easeNone, onComplete:function():void{
-				alertBg.kill();
+			TweenLite.to(_bottomFusion, _readyToDeleteTweenTime, {alpha:1.0, y:bottom_offsetY_A, ease:Linear.easeNone});
+			
+			TweenLite.to(_alertBg, _readyToDeleteTweenTime, {alpha:0, ease:Linear.easeNone, onComplete:function():void{
+				_alertBg.kill();
 			}})
 			
 			alertFusion.touchable = false;
 			
 			this.doRevertIcon();
 			this.doTweenGarbage(FLAG_BACK_TO_O);
+			
+			
 		}
 		
 		private function onDetermine(e:ATouchEvent):void{
-			alertBg.kill();
+//			_alertBg.kill();
 			alertFusion.touchable = false;
 			
 			this.doCastToGarbage();

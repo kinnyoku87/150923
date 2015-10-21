@@ -24,7 +24,7 @@ public class Res_StateAA extends StateAA {
 		
 		AY = new <String>
 			[
-				"temp/bg.png",
+				"temp/bg2.png",
 				"temp/topBg.png",
 				
 				"temp/browser.png",
@@ -42,6 +42,16 @@ public class Res_StateAA extends StateAA {
 				"temp/folder2.png",
 				"temp/phone2.png",
 				"temp/theme2.png",
+				
+				"temp/browser_text.png",
+				"temp/calculator_text.png",
+				"temp/camera_text.png",
+				"temp/flashlight_text.png",
+				"temp/folder_text.png",
+				"temp/phone_text.png",
+				"temp/theme_text.png",
+				"temp/topStatus.png",
+				"temp/navigator.png",
 				
 				"temp/topBg_A.png",
 				"temp/text_A.png",
