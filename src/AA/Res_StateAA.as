@@ -65,18 +65,19 @@ public class Res_StateAA extends StateAA {
 			]
 		this.resA.addBundle(new FilesBundle(AY), new TextureAA_BundleHandler(1.0, false, false));
 		
-		AY = new <String>
-			[
-				"temp/Sword.png",
-				"temp/Shield.png",
-				"temp/Skull Cross.png",
-				"temp/Treasure Chest.png",
-			];
-		this.resA.addBundle(new FilesBundle(AY), new TextureAA_BundleHandler);
+//		AY = new <String>
+//			[
+//				"temp/Sword.png",
+//				"temp/Shield.png",
+//				"temp/Skull Cross.png",
+//				"temp/Treasure Chest.png",
+//			];
+//		this.resA.addBundle(new FilesBundle(AY), new TextureAA_BundleHandler);
 		
 		AY = new <String>
 			[
-				"atlas/garbage.atlas"
+//				"atlas/garbage.atlas"
+				"atlas/garbageA.atlas"
 			];
 		this.resA.addBundle(new FilesBundle(AY), new AtlasAA_BundleHandler);
 		

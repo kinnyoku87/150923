@@ -44,8 +44,8 @@ package initializers
 		private function onStart(e:AEvent):void {	
 			_rootAA.removeEventListener(AEvent.START, onStart);
 			
-			_rootAA.getView("res").activate([["delete"]]);
-			
+			// 第一次开启delete状态AA，存在缓动bug..!!第二次开启bug自动消失..
+			_rootAA.getView("res").activate([["delete", "delete"]]);
 			
 			_rootAA.getNode().doubleClickEnabled = true;
 			_rootAA.getNode().addEventListener(ATouchEvent.DOUBLE_CLICK, function(e:ATouchEvent):void{
