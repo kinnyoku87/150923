@@ -5,18 +5,13 @@ package AA
 	import com.greensock.TweenMax;
 	import com.greensock.easing.Back;
 	import com.greensock.easing.Cubic;
-	import com.greensock.easing.Elastic;
 	import com.greensock.easing.Linear;
-	import com.greensock.easing.Quad;
 	import com.greensock.easing.Sine;
-	import com.greensock.easing.Strong;
 	
-	import flash.display3D.textures.CubeTexture;
 	import flash.geom.Point;
 	import flash.utils.clearTimeout;
 	import flash.utils.setTimeout;
 	
-	import org.agony2d.Agony;
 	import org.agony2d.display.AnimeAA;
 	import org.agony2d.display.ButtonAA;
 	import org.agony2d.display.DragFusionAA;
@@ -27,7 +22,6 @@ package AA
 	import org.agony2d.events.ATouchEvent;
 	import org.agony2d.input.Touch;
 	import org.agony2d.utils.AColor;
-	import org.agony2d.utils.AMath;
 
 	public class Delete_StateAA extends StateAA {
 		
